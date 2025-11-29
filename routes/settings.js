@@ -28,7 +28,9 @@ router.post('/categories/add', (req, res) => {
   }
 
   try {
-    categoryStore.add({ name: name.trim(), budget: budget || 0 });
+    // If budget is empty or 0, set to null (unlimited), otherwise use the provided value
+  const budgetValue = (!budget || budget === '0' || budget === 0) ? null : parseFloat(budget);
+  categoryStore.add({ name: name.trim(), budget: budgetValue });
     res.redirect('/settings?success=Category added successfully');
   } catch (error) {
     res.redirect(`/settings?error=${encodeURIComponent(error.message)}`);
@@ -68,8 +70,15 @@ router.post('/categories/:id/delete', (req, res) => {
     return res.redirect(`/settings?error=Cannot delete category "${category.name}" because ${expensesUsingCategory.length} expense(s) are using it. Please reassign or delete those expenses first.`);
   }
   
-  categoryStore.remove(categoryId);
-  res.redirect('/settings?success=Category deleted successfully');
+  try {
+    const deleted = categoryStore.remove(categoryId);
+    if (!deleted) {
+      return res.redirect('/settings?error=Failed to delete category');
+    }
+    res.redirect('/settings?success=Category deleted successfully');
+  } catch (error) {
+    res.redirect(`/settings?error=${encodeURIComponent(error.message)}`);
+  }
 });
 
 // POST /settings/recurring/add - Add recurring expense
@@ -153,6 +162,34 @@ router.post('/recurring/generate', (req, res) => {
   });
 
   res.redirect(`/settings?success=${generatedCount} recurring expense(s) generated for this month`);
+});
+
+// POST /settings/reset - Reset all data
+router.post('/reset', (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    
+    // Clear all data files
+    const expensesFile = path.join(__dirname, '../data/expenses.json');
+    const categoriesFile = path.join(__dirname, '../data/categories.json');
+    const recurringFile = path.join(__dirname, '../data/recurring.json');
+    
+    // Write empty arrays to all data files
+    fs.writeFileSync(expensesFile, JSON.stringify([], null, 2), 'utf8');
+    fs.writeFileSync(categoriesFile, JSON.stringify([], null, 2), 'utf8');
+    fs.writeFileSync(recurringFile, JSON.stringify([], null, 2), 'utf8');
+    
+    // Categories will be reinitialized with defaults on next load
+    // Clear the category store cache by reloading
+    const categoryStore = require('../data/categoryStore');
+    categoryStore.getAll(); // This will reinitialize defaults
+    
+    res.redirect('/settings?success=All data has been reset. Expense Buddy is now fresh and ready to use.');
+  } catch (error) {
+    console.error('Error resetting data:', error);
+    res.redirect(`/settings?error=${encodeURIComponent('Failed to reset data: ' + error.message)}`);
+  }
 });
 
 module.exports = router;

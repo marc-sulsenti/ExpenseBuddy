@@ -20,18 +20,27 @@ const DEFAULT_CATEGORIES = [
 function loadCategories() {
   try {
     if (!fs.existsSync(CATEGORIES_FILE)) {
-      // Initialize with default categories
+      // Initialize with default categories only if file doesn't exist (first run)
       saveCategories(DEFAULT_CATEGORIES);
       return DEFAULT_CATEGORIES;
     }
     const data = fs.readFileSync(CATEGORIES_FILE, 'utf8');
     if (!data || data.trim() === '') {
+      // File exists but is empty - initialize defaults
       saveCategories(DEFAULT_CATEGORIES);
       return DEFAULT_CATEGORIES;
     }
-    return JSON.parse(data);
+    const categories = JSON.parse(data);
+    // If parsed result is empty array, initialize defaults (first time after reset)
+    if (Array.isArray(categories) && categories.length === 0) {
+      saveCategories(DEFAULT_CATEGORIES);
+      return DEFAULT_CATEGORIES;
+    }
+    // Filter out inactive categories (legacy support for old soft-delete)
+    return categories.filter(cat => cat.active !== false);
   } catch (error) {
     console.error('Error loading categories:', error);
+    // On error, try to preserve existing data, only use defaults as last resort
     return DEFAULT_CATEGORIES;
   }
 }
@@ -54,7 +63,14 @@ function saveCategories(categories) {
  * @returns {Array} Array of all categories
  */
 function getAll() {
-  return loadCategories();
+  const categories = loadCategories();
+  // Clean up: remove any inactive categories from the file
+  const activeCategories = categories.filter(cat => cat.active !== false);
+  if (activeCategories.length !== categories.length) {
+    // Some categories were filtered out, save the cleaned list
+    saveCategories(activeCategories);
+  }
+  return activeCategories;
 }
 
 /**
@@ -134,12 +150,42 @@ function update(id, updatedFields) {
 }
 
 /**
- * Remove a category by id (soft delete - set active to false)
+ * Remove a category by id (permanent delete)
  * @param {string} id - Category id
  * @returns {boolean} True if removed, false if not found
  */
 function remove(id) {
-  return update(id, { active: false });
+  // Load all categories including inactive ones for deletion
+  let categories;
+  try {
+    if (!fs.existsSync(CATEGORIES_FILE)) {
+      return false;
+    }
+    const data = fs.readFileSync(CATEGORIES_FILE, 'utf8');
+    if (!data || data.trim() === '' || data.trim() === '[]') {
+      return false;
+    }
+    categories = JSON.parse(data);
+  } catch (error) {
+    console.error('Error loading categories for deletion:', error);
+    return false;
+  }
+  
+  const categoryToDelete = categories.find(cat => cat.id === id);
+  if (!categoryToDelete) {
+    return false;
+  }
+  
+  // Don't allow deletion of default categories
+  const defaultIds = DEFAULT_CATEGORIES.map(cat => cat.id);
+  if (defaultIds.includes(id)) {
+    throw new Error('Cannot delete default categories');
+  }
+  
+  // Permanently remove the category
+  const filtered = categories.filter(cat => cat.id !== id);
+  saveCategories(filtered);
+  return true;
 }
 
 module.exports = {

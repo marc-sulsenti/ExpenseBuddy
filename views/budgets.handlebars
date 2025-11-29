@@ -20,17 +20,20 @@
                         <td>
                             <input type="number" 
                                    name="budgets[{{id}}]" 
-                                   value="{{budget}}" 
+                                   value="{{#if budget}}{{budget}}{{else}}{{/if}}" 
                                    step="0.01" 
                                    min="0" 
+                                   placeholder="Unlimited"
                                    class="budget-input">
                         </td>
                         <td class="spent-amount">{{formatCurrency spent}}</td>
                         <td class="remaining-amount {{#if isOverBudget}}negative{{/if}}">
-                            {{formatCurrency remaining}}
+                            {{formatRemaining remaining budget}}
                         </td>
                         <td class="status">
-                            {{#if isOverBudget}}
+                            {{#if (or (eq budget null) (eq budget undefined))}}
+                                <span class="status-badge tracking">Tracking</span>
+                            {{else if isOverBudget}}
                                 <span class="status-badge over">Over Budget</span>
                             {{else if (gt remaining 0)}}
                                 <span class="status-badge under">Under Budget</span>

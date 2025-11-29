@@ -21,20 +21,16 @@
                 <input type="number" id="amount" name="amount" step="0.01" min="0.01" value="{{formData.amount}}" required>
             </div>
             <div class="form-group">
-                <label for="category">Category *</label>
-                {{#if categories.length}}
-                    <select id="category" name="category" required>
-                        <option value="">Select category</option>
-                        {{#each categories}}
-                            <option value="{{name}}" {{#if (eq ../formData.category name)}}selected{{/if}}>{{name}}</option>
-                        {{/each}}
-                    </select>
-                {{else}}
-                    <select id="category" name="category" required disabled>
-                        <option value="">No categories available</option>
-                    </select>
-                    <p class="form-help">Please <a href="/settings">add a category</a> first.</p>
-                {{/if}}
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="No Category" {{#if (eq formData.category "No Category")}}selected{{/if}}{{#unless formData.category}}selected{{/unless}}>No Category</option>
+                    {{#each categories}}
+                        <option value="{{name}}" {{#if (eq ../formData.category name)}}selected{{/if}}>{{name}}</option>
+                    {{/each}}
+                </select>
+                {{#unless categories.length}}
+                    <p class="form-help">No categories available. <a href="/settings">Add a new category</a> to better organize your expenses.</p>
+                {{/unless}}
             </div>
             <div class="form-group">
                 <label for="paymentMethod">Payment Method *</label>
@@ -60,6 +56,7 @@
                 <label for="filterCategory">Category</label>
                 <select id="filterCategory" name="category">
                     <option value="all" {{#if (eq filters.category "all")}}selected{{/if}}>All Categories</option>
+                    <option value="No Category" {{#if (eq filters.category "No Category")}}selected{{/if}}>No Category</option>
                     {{#each categories}}
                         <option value="{{name}}" {{#if (eq ../filters.category name)}}selected{{/if}}>{{name}}</option>
                     {{/each}}
@@ -118,9 +115,9 @@
                             <td>${{amount}}</td>
                             <td>{{paymentMethod}}</td>
                             <td>{{description}}</td>
-                            <td>
+                            <td class="actions-cell">
                                 <a href="/expenses/{{id}}/edit" class="btn btn-small btn-secondary">Edit</a>
-                                <form action="/expenses/{{id}}/delete" method="POST" style="display: inline;" onsubmit="return confirmDelete()">
+                                <form action="/expenses/{{id}}/delete" method="POST" class="inline-form-action" onsubmit="return confirmDelete()">
                                     <button type="submit" class="btn btn-small btn-danger">Delete</button>
                                 </form>
                             </td>

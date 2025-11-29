@@ -15,6 +15,7 @@ const hbs = exphbs.create({
     eq: (a, b) => a === b,
     gt: (a, b) => a > b,
     lt: (a, b) => a < b,
+    or: (a, b) => a || b,
     subtract: (a, b) => (a - b).toFixed(2),
     multiply: (a, b) => a * b,
     divide: (a, b) => b !== 0 ? a / b : 0,
@@ -22,6 +23,16 @@ const hbs = exphbs.create({
     formatCurrency: (amount) => {
       if (typeof amount !== 'number') return '$0.00';
       return '$' + amount.toFixed(2);
+    },
+    formatBudget: (budget) => {
+      if (budget === null || budget === undefined) return 'Unlimited';
+      if (typeof budget !== 'number') return '$0.00';
+      return '$' + budget.toFixed(2);
+    },
+    formatRemaining: (remaining, budget) => {
+      if (budget === null || budget === undefined) return 'Unlimited';
+      if (typeof remaining !== 'number') return '$0.00';
+      return '$' + remaining.toFixed(2);
     }
   }
 });
@@ -52,6 +63,7 @@ app.use('/', require('./routes/dashboard'));
 app.use('/expenses', require('./routes/expenses'));
 app.use('/budgets', require('./routes/budgets'));
 app.use('/settings', require('./routes/settings'));
+app.use('/about', require('./routes/about'));
 app.use('/api', require('./routes/api'));
 
 // Error handling middleware

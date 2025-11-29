@@ -74,10 +74,11 @@ router.get('/', (req, res) => {
     .filter(cat => cat.active)
     .map(cat => {
       const categorySpending = spendingByCategory[cat.name] || 0;
-      const budget = cat.budget || 0;
-      const remaining = budget - categorySpending;
-      // Over budget if spent exceeds budget (and budget is set)
-      const isOverBudget = budget > 0 && categorySpending > budget;
+      const budget = cat.budget !== null && cat.budget !== undefined ? cat.budget : null;
+      // Calculate remaining only if budget is set (not null/undefined)
+      const remaining = budget !== null ? budget - categorySpending : null;
+      // Over budget if spent exceeds budget (and budget is set and > 0)
+      const isOverBudget = budget !== null && budget > 0 && categorySpending > budget;
 
       return {
         category: cat.name,

@@ -45,12 +45,12 @@
                 <div class="budget-item {{#if isOverBudget}}over-budget{{/if}}">
                     <div class="budget-header">
                         <span class="budget-category">{{category}}</span>
-                        <span class="budget-amount">{{formatCurrency spent}} / {{formatCurrency budget}}</span>
+                        <span class="budget-amount">{{formatCurrency spent}} / {{formatBudget budget}}</span>
                     </div>
                     <div class="budget-bar">
                         <div class="budget-bar-fill" data-width="{{#if (gt budget 0)}}{{divide spent budget}}{{else}}{{#if (gt spent 0)}}1{{else}}0{{/if}}{{/if}}"></div>
                     </div>
-                    <span class="budget-remaining">Remaining: {{formatCurrency remaining}}</span>
+                    <span class="budget-remaining">Remaining: {{formatRemaining remaining budget}}</span>
                 </div>
             {{else}}
                 <div class="empty-state">
