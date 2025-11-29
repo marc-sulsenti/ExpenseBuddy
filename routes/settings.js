@@ -175,15 +175,13 @@ router.post('/reset', (req, res) => {
     const categoriesFile = path.join(__dirname, '../data/categories.json');
     const recurringFile = path.join(__dirname, '../data/recurring.json');
     
-    // Write empty arrays to all data files
+    // Clear all data files
     fs.writeFileSync(expensesFile, JSON.stringify([], null, 2), 'utf8');
-    fs.writeFileSync(categoriesFile, JSON.stringify([], null, 2), 'utf8');
     fs.writeFileSync(recurringFile, JSON.stringify([], null, 2), 'utf8');
     
-    // Categories will be reinitialized with defaults on next load
-    // Clear the category store cache by reloading
+    // Reinitialize default categories after reset (intentional action)
     const categoryStore = require('../data/categoryStore');
-    categoryStore.getAll(); // This will reinitialize defaults
+    categoryStore.reinitializeDefaults();
     
     res.redirect('/settings?success=All data has been reset. Expense Buddy is now fresh and ready to use.');
   } catch (error) {

@@ -7,7 +7,7 @@ function confirmDelete() {
 
 // Confirm reset all data action
 function confirmReset() {
-    const firstConfirm = confirm('WARNING: This will delete ALL your data!\n\nThis includes:\n- All expenses\n- All categories (except defaults)\n- All recurring expenses\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?');
+    const firstConfirm = confirm('WARNING: This will delete ALL your data!\n\nThis includes:\n- All expenses\n- All custom categories\n- All recurring expenses\n\nDefault categories (Food, Transport, Rent, Utilities, Entertainment, Other) will be restored.\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?');
     if (!firstConfirm) {
         return false;
     }

@@ -52,8 +52,6 @@ ExpenseBuddy/
 │       ├── common.js
 │       ├── dashboard.js
 │       └── expenses.js
-├── scripts/
-│   └── seed.js           # Sample data generator
 └── tests/                 # Unit tests
     ├── expenseStore.test.js
     └── budget.test.js
@@ -68,12 +66,7 @@ ExpenseBuddy/
    npm install
    ```
 
-3. **Initialize data files** (optional - they will be created automatically):
-   ```bash
-   # Data files are created automatically on first run
-   # Or seed with sample data:
-   npm run seed
-   ```
+3. **Data files are created automatically on first run** - no initialization needed
 
 ## Running the Application
 
@@ -153,18 +146,6 @@ Tests cover:
 - Budget calculations
 - Monthly totals and filtering
 
-## Sample Data
-
-To populate the application with sample data for demonstration:
-```bash
-npm run seed
-```
-
-This will create:
-- 6 default categories with sample budgets
-- Sample expenses for the last 3 months
-- 2 recurring expense templates
-
 ## Demo Script for Grading
 
 1. **Start the application**: `npm start`
@@ -221,7 +202,7 @@ This will create:
 - Ensure the `data/` directory exists and is writable
 
 **Categories not showing**:
-- Run `npm run seed` to initialize default categories
+- Default categories are created automatically on first run
 - Or manually add categories via Settings page
 
 ## License

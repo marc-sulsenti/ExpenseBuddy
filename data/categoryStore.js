@@ -3,7 +3,7 @@ const path = require('path');
 
 const CATEGORIES_FILE = path.join(__dirname, 'categories.json');
 
-// Default categories
+// Default categories - exported for use in reset functionality
 const DEFAULT_CATEGORIES = [
   { id: 'food', name: 'Food', budget: 0, active: true },
   { id: 'transport', name: 'Transport', budget: 0, active: true },
@@ -26,22 +26,21 @@ function loadCategories() {
     }
     const data = fs.readFileSync(CATEGORIES_FILE, 'utf8');
     if (!data || data.trim() === '') {
-      // File exists but is empty - initialize defaults
-      saveCategories(DEFAULT_CATEGORIES);
-      return DEFAULT_CATEGORIES;
+      // File exists but is empty - return empty array (user may have intentionally cleared it)
+      return [];
     }
     const categories = JSON.parse(data);
-    // If parsed result is empty array, initialize defaults (first time after reset)
-    if (Array.isArray(categories) && categories.length === 0) {
-      saveCategories(DEFAULT_CATEGORIES);
-      return DEFAULT_CATEGORIES;
+    // Return whatever is in the file, even if empty (user may have deleted all categories)
+    if (!Array.isArray(categories)) {
+      // Invalid format - return empty array instead of defaults
+      return [];
     }
     // Filter out inactive categories (legacy support for old soft-delete)
     return categories.filter(cat => cat.active !== false);
   } catch (error) {
     console.error('Error loading categories:', error);
-    // On error, try to preserve existing data, only use defaults as last resort
-    return DEFAULT_CATEGORIES;
+    // On error, return empty array instead of defaults
+    return [];
   }
 }
 
@@ -150,6 +149,15 @@ function update(id, updatedFields) {
 }
 
 /**
+ * Reinitialize default categories (used after reset)
+ * @returns {Array} Array of default categories
+ */
+function reinitializeDefaults() {
+  saveCategories(DEFAULT_CATEGORIES);
+  return DEFAULT_CATEGORIES;
+}
+
+/**
  * Remove a category by id (permanent delete)
  * @param {string} id - Category id
  * @returns {boolean} True if removed, false if not found
@@ -194,6 +202,8 @@ module.exports = {
   getById,
   add,
   update,
-  remove
+  remove,
+  reinitializeDefaults,
+  DEFAULT_CATEGORIES
 };
 
