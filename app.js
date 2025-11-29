@@ -52,6 +52,7 @@ app.use('/', require('./routes/dashboard'));
 app.use('/expenses', require('./routes/expenses'));
 app.use('/budgets', require('./routes/budgets'));
 app.use('/settings', require('./routes/settings'));
+app.use('/about', require('./routes/about'));
 app.use('/api', require('./routes/api'));
 
 // Error handling middleware

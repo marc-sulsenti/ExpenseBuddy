@@ -10,7 +10,7 @@
     "seed": "node scripts/seed.js"
   },
   "keywords": ["expense", "budget", "tracking"],
-  "author": "",
+  "author": "ExpenseBuddy Team (Marc Sulsenti, Sahil Virani, Justin Synnott, Zachary Rosario)",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",

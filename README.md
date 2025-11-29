@@ -1,6 +1,6 @@
 # Expense Buddy
 
-A personal expense tracking and budgeting web application built for CS555 Agile Methods course project.
+A personal expense tracking and budgeting web application built for SSW-555 Agile Methods course project.
 
 ## Overview
 
@@ -230,6 +230,12 @@ ISC
 
 ## Course Information
 
-**Course**: CS555 - Agile Methods  
+**Course**: SSW-555 - Agile Methods  
 **Project**: Expense Buddy  
-**Team**: [Your Team Name]
+**Team**: ExpenseBuddy
+
+### Team Members
+- Marc Sulsenti
+- Sahil Virani
+- Justin Synnott
+- Zachary Rosario
