@@ -118,16 +118,17 @@ router.post('/create', (req, res) => {
     errors.push('Valid amount is required');
   }
   
-  if (!category) {
-    errors.push('Category is required');
-  } else {
-    // Validate category exists and is active
+  // Category is optional, but if provided, validate it exists and is active
+  if (category && category !== 'No Category') {
     const categories = categoryStore.getActive();
     const categoryExists = categories.some(cat => cat.name === category);
     if (!categoryExists) {
       errors.push('Selected category does not exist or is inactive');
     }
   }
+  
+  // Use "No Category" as default if no category provided
+  const finalCategory = category || 'No Category';
   
   if (!paymentMethod) {
     errors.push('Payment method is required');
@@ -148,7 +149,7 @@ router.post('/create', (req, res) => {
   expenseStore.add({
     date,
     amount: parseFloat(amount),
-    category,
+    category: finalCategory,
     paymentMethod,
     description: description || ''
   });
@@ -191,15 +192,17 @@ router.post('/:id/edit', (req, res) => {
     errors.push('Valid amount is required');
   }
   
-  if (!category) {
-    errors.push('Category is required');
-  } else {
+  // Category is optional, but if provided, validate it exists and is active
+  if (category && category !== 'No Category') {
     const categories = categoryStore.getActive();
     const categoryExists = categories.some(cat => cat.name === category);
     if (!categoryExists) {
       errors.push('Selected category does not exist or is inactive');
     }
   }
+  
+  // Use "No Category" as default if no category provided
+  const finalCategory = category || 'No Category';
   
   if (!paymentMethod) {
     errors.push('Payment method is required');
@@ -220,7 +223,7 @@ router.post('/:id/edit', (req, res) => {
   const updated = expenseStore.update(req.params.id, {
     date,
     amount: parseFloat(amount),
-    category,
+    category: finalCategory,
     paymentMethod,
     description: description || ''
   });

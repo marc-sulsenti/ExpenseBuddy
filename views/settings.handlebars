@@ -17,18 +17,12 @@
                         <tr>
                             <td>{{name}}</td>
                             <td>
-                                {{#if active}}
-                                    <span class="status-badge active">Active</span>
-                                {{else}}
-                                    <span class="status-badge inactive">Inactive</span>
-                                {{/if}}
+                                <span class="status-badge active">Active</span>
                             </td>
                             <td>
-                                {{#if active}}
-                                    <form action="/settings/categories/{{id}}/delete" method="POST" style="display: inline;" onsubmit="return confirmDelete()">
-                                        <button type="submit" class="btn btn-small btn-danger">Delete</button>
-                                    </form>
-                                {{/if}}
+                                <form action="/settings/categories/{{id}}/delete" method="POST" style="display: inline;" onsubmit="return confirmDelete()">
+                                    <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                                </form>
                             </td>
                         </tr>
                     {{/each}}
@@ -141,6 +135,17 @@
             <form action="/api/import/csv" method="POST" class="import-form">
                 <textarea name="csvContent" rows="10" placeholder="Date,Amount,Category,Payment Method,Description&#10;2024-01-15,25.50,Food,Card,Groceries" required></textarea>
                 <button type="submit" class="btn btn-secondary">Import CSV</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="settings-section danger-zone">
+        <h3>Reset All Data</h3>
+        <p class="section-description warning-text">Warning: The following actions cannot be undone. All your data will be permanently deleted.</p>
+        <div class="reset-section">
+            <p class="section-description">This will delete all expenses, categories, and recurring expense templates. You will start with a fresh Expense Buddy.</p>
+            <form action="/settings/reset" method="POST" class="reset-form" onsubmit="return confirmReset()">
+                <button type="submit" class="btn btn-danger">Reset All Data</button>
             </form>
         </div>
     </div>

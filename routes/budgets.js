@@ -32,14 +32,16 @@ router.get('/', (req, res) => {
   // Build budget status for each category
   const budgetStatus = categories.map(cat => {
     const spent = spendingByCategory[cat.name] || 0;
-    const budget = cat.budget || 0;
-    const remaining = budget - spent;
-    // Over budget if spent exceeds budget (and budget is set)
-    const isOverBudget = budget > 0 && spent > budget;
+    const budget = cat.budget !== null && cat.budget !== undefined ? cat.budget : null;
+    // Calculate remaining only if budget is set (not null/undefined)
+    const remaining = budget !== null ? budget - spent : null;
+    // Over budget if spent exceeds budget (and budget is set and > 0)
+    const isOverBudget = budget !== null && budget > 0 && spent > budget;
 
     return {
       ...cat,
       spent,
+      budget,
       remaining,
       isOverBudget
     };
@@ -65,7 +67,11 @@ router.post('/save', (req, res) => {
   
   // Update each category's budget
   Object.keys(budgets).forEach(categoryId => {
-    const budgetAmount = parseFloat(budgets[categoryId]) || 0;
+    const budgetValue = budgets[categoryId];
+    // If empty string or '0', set to null (unlimited), otherwise parse as float
+    const budgetAmount = (!budgetValue || budgetValue === '' || budgetValue === '0' || parseFloat(budgetValue) === 0) 
+      ? null 
+      : parseFloat(budgetValue);
     categoryStore.update(categoryId, { budget: budgetAmount });
   });
 
