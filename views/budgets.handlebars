@@ -1,0 +1,55 @@
+<div class="budgets-page">
+    <h2>Monthly Budgets</h2>
+    <p class="page-description">Set monthly budget amounts for each category. Track your spending against these budgets on the dashboard.</p>
+
+    <form action="/budgets/save" method="POST" class="budgets-form">
+        <table class="budgets-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Budget ($)</th>
+                    <th>Spent This Month</th>
+                    <th>Remaining</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each budgetStatus}}
+                    <tr class="{{#if isOverBudget}}over-budget-row{{/if}}">
+                        <td class="category-name">{{name}}</td>
+                        <td>
+                            <input type="number" 
+                                   name="budgets[{{id}}]" 
+                                   value="{{budget}}" 
+                                   step="0.01" 
+                                   min="0" 
+                                   class="budget-input">
+                        </td>
+                        <td class="spent-amount">{{formatCurrency spent}}</td>
+                        <td class="remaining-amount {{#if isOverBudget}}negative{{/if}}">
+                            {{formatCurrency remaining}}
+                        </td>
+                        <td class="status">
+                            {{#if isOverBudget}}
+                                <span class="status-badge over">Over Budget</span>
+                            {{else if (gt remaining 0)}}
+                                <span class="status-badge under">Under Budget</span>
+                            {{else}}
+                                <span class="status-badge at">At Budget</span>
+                            {{/if}}
+                        </td>
+                    </tr>
+                {{else}}
+                    <tr>
+                        <td colspan="5">No categories found. <a href="/settings">Add categories</a></td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Budgets</button>
+            <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </form>
+</div>
+

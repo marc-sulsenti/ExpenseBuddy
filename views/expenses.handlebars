@@ -1,0 +1,141 @@
+<div class="expenses-page">
+    <h2>Expenses</h2>
+
+    {{#if errors}}
+        <div class="error-messages">
+            {{#each errors}}
+                <div class="error-message">{{this}}</div>
+            {{/each}}
+        </div>
+    {{/if}}
+
+    <div class="expense-form-section" id="expense-form-section">
+        <h3>Add New Expense</h3>
+        <form action="/expenses/create" method="POST" class="expense-form" id="expenseForm">
+            <div class="form-group">
+                <label for="date">Date *</label>
+                <input type="date" id="date" name="date" value="{{#if formData.date}}{{formData.date}}{{else}}{{now}}{{/if}}" required>
+            </div>
+            <div class="form-group">
+                <label for="amount">Amount *</label>
+                <input type="number" id="amount" name="amount" step="0.01" min="0.01" value="{{formData.amount}}" required>
+            </div>
+            <div class="form-group">
+                <label for="category">Category *</label>
+                {{#if categories.length}}
+                    <select id="category" name="category" required>
+                        <option value="">Select category</option>
+                        {{#each categories}}
+                            <option value="{{name}}" {{#if (eq ../formData.category name)}}selected{{/if}}>{{name}}</option>
+                        {{/each}}
+                    </select>
+                {{else}}
+                    <select id="category" name="category" required disabled>
+                        <option value="">No categories available</option>
+                    </select>
+                    <p class="form-help">Please <a href="/settings">add a category</a> first.</p>
+                {{/if}}
+            </div>
+            <div class="form-group">
+                <label for="paymentMethod">Payment Method *</label>
+                <select id="paymentMethod" name="paymentMethod" required>
+                    <option value="">Select method</option>
+                    <option value="Cash" {{#if (eq formData.paymentMethod "Cash")}}selected{{/if}}>Cash</option>
+                    <option value="Card" {{#if (eq formData.paymentMethod "Card")}}selected{{/if}}>Card</option>
+                    <option value="Other" {{#if (eq formData.paymentMethod "Other")}}selected{{/if}}>Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <input type="text" id="description" name="description" value="{{formData.description}}" placeholder="Optional note">
+            </div>
+            <button type="submit" class="btn btn-primary">Add Expense</button>
+        </form>
+    </div>
+
+    <div class="filters-section">
+        <h3>Filter Expenses</h3>
+        <form method="GET" action="/expenses" class="filter-form">
+            <div class="filter-group">
+                <label for="filterCategory">Category</label>
+                <select id="filterCategory" name="category">
+                    <option value="all" {{#if (eq filters.category "all")}}selected{{/if}}>All Categories</option>
+                    {{#each categories}}
+                        <option value="{{name}}" {{#if (eq ../filters.category name)}}selected{{/if}}>{{name}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="startDate">Start Date</label>
+                <input type="date" id="startDate" name="startDate" value="{{filters.startDate}}">
+            </div>
+            <div class="filter-group">
+                <label for="endDate">End Date</label>
+                <input type="date" id="endDate" name="endDate" value="{{filters.endDate}}">
+            </div>
+            <div class="filter-group">
+                <label for="search">Search</label>
+                <input type="text" id="search" name="search" value="{{filters.search}}" placeholder="Search description or category">
+            </div>
+            <div class="filter-group">
+                <label for="sortBy">Sort By</label>
+                <select id="sortBy" name="sortBy">
+                    <option value="date" {{#if (eq filters.sortBy "date")}}selected{{/if}}>Date</option>
+                    <option value="amount" {{#if (eq filters.sortBy "amount")}}selected{{/if}}>Amount</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sortOrder">Order</label>
+                <select id="sortOrder" name="sortOrder">
+                    <option value="desc" {{#if (eq filters.sortOrder "desc")}}selected{{/if}}>Descending</option>
+                    <option value="asc" {{#if (eq filters.sortOrder "asc")}}selected{{/if}}>Ascending</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Apply Filters</button>
+            <a href="/expenses" class="btn btn-link">Clear</a>
+        </form>
+    </div>
+
+    <div class="expenses-list-section">
+        <h3>Expense List ({{expenses.length}} items)</h3>
+        {{#if expenses.length}}
+            <table class="expenses-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Payment Method</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each expenses}}
+                        <tr>
+                            <td>{{date}}</td>
+                            <td>{{category}}</td>
+                            <td>${{amount}}</td>
+                            <td>{{paymentMethod}}</td>
+                            <td>{{description}}</td>
+                            <td>
+                                <a href="/expenses/{{id}}/edit" class="btn btn-small btn-secondary">Edit</a>
+                                <form action="/expenses/{{id}}/delete" method="POST" style="display: inline;" onsubmit="return confirmDelete()">
+                                    <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        {{else}}
+            <div class="empty-state">
+                <p>No expenses found matching your filters.</p>
+                <p><a href="/expenses" class="btn btn-secondary">Clear Filters</a> or <a href="/expenses#expense-form-section" class="btn btn-primary">Add Your First Expense</a></p>
+            </div>
+        {{/if}}
+    </div>
+</div>
+
+<script src="/js/expenses.js"></script>
+

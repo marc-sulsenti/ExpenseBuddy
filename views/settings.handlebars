@@ -1,0 +1,148 @@
+<div class="settings-page">
+    <h2>Settings</h2>
+
+    <div class="settings-section">
+        <h3>Categories</h3>
+        <div class="categories-list">
+            <table class="settings-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each categories}}
+                        <tr>
+                            <td>{{name}}</td>
+                            <td>
+                                {{#if active}}
+                                    <span class="status-badge active">Active</span>
+                                {{else}}
+                                    <span class="status-badge inactive">Inactive</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{#if active}}
+                                    <form action="/settings/categories/{{id}}/delete" method="POST" style="display: inline;" onsubmit="return confirmDelete()">
+                                        <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                                    </form>
+                                {{/if}}
+                            </td>
+                        </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        <div class="add-category-form">
+            <h4>Add New Category</h4>
+            <form action="/settings/categories/add" method="POST" class="inline-form">
+                <input type="text" name="name" placeholder="Category name" required>
+                <input type="number" name="budget" step="0.01" min="0" placeholder="Initial budget (optional)" value="0">
+                <button type="submit" class="btn btn-primary">Add Category</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Recurring Expenses</h3>
+        <p class="section-description">Set up expenses that repeat monthly. Use "Generate" to create them for the current month.</p>
+        
+        <div class="recurring-list">
+            {{#if recurring.length}}
+                <table class="settings-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Payment Method</th>
+                            <th>Day of Month</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each recurring}}
+                            <tr>
+                                <td>{{description}}</td>
+                                <td>{{formatCurrency amount}}</td>
+                                <td>{{category}}</td>
+                                <td>{{paymentMethod}}</td>
+                                <td>{{dayOfMonth}}</td>
+                                <td>
+                                    <form action="/settings/recurring/{{id}}/delete" method="POST" style="display: inline;" onsubmit="return confirmDelete()">
+                                        <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            {{else}}
+                <p>No recurring expenses set up yet.</p>
+            {{/if}}
+        </div>
+
+        <div class="add-recurring-form">
+            <h4>Add Recurring Expense</h4>
+            <form action="/settings/recurring/add" method="POST" class="recurring-form">
+                <div class="form-group">
+                    <label for="recurringAmount">Amount *</label>
+                    <input type="number" id="recurringAmount" name="amount" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="recurringCategory">Category *</label>
+                    <select id="recurringCategory" name="category" required>
+                        <option value="">Select category</option>
+                        {{#each categories}}
+                            {{#if active}}
+                                <option value="{{name}}">{{name}}</option>
+                            {{/if}}
+                        {{/each}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="recurringPaymentMethod">Payment Method *</label>
+                    <select id="recurringPaymentMethod" name="paymentMethod" required>
+                        <option value="">Select method</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Card">Card</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="recurringDescription">Description</label>
+                    <input type="text" id="recurringDescription" name="description" placeholder="Optional note">
+                </div>
+                <div class="form-group">
+                    <label for="recurringDayOfMonth">Day of Month * (1-31)</label>
+                    <input type="number" id="recurringDayOfMonth" name="dayOfMonth" min="1" max="31" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Recurring Expense</button>
+            </form>
+        </div>
+
+        <div class="generate-recurring-section">
+            <form action="/settings/recurring/generate" method="POST" onsubmit="return confirm('Generate recurring expenses for the current month?')">
+                <button type="submit" class="btn btn-secondary">Generate Recurring Expenses for This Month</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Data Management</h3>
+        <div class="data-actions">
+            <a href="/api/export/csv" class="btn btn-secondary">Export to CSV</a>
+        </div>
+        <div class="import-section">
+            <h4>Import from CSV</h4>
+            <p class="section-description">Paste CSV content below. Format: Date,Amount,Category,Payment Method,Description</p>
+            <form action="/api/import/csv" method="POST" class="import-form">
+                <textarea name="csvContent" rows="10" placeholder="Date,Amount,Category,Payment Method,Description&#10;2024-01-15,25.50,Food,Card,Groceries" required></textarea>
+                <button type="submit" class="btn btn-secondary">Import CSV</button>
+            </form>
+        </div>
+    </div>
+</div>
+
