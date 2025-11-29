@@ -1,0 +1,86 @@
+<div class="dashboard">
+    <h2>Dashboard</h2>
+    
+    <div class="summary-cards">
+        <div class="card">
+            <h3>This Month</h3>
+            <p class="amount">{{formatCurrency currentMonthTotal}}</p>
+            <span class="period">{{currentMonthName}}</span>
+        </div>
+        <div class="card">
+            <h3>Last Month</h3>
+            <p class="amount">{{formatCurrency lastMonthTotal}}</p>
+            <span class="period">{{lastMonthName}}</span>
+        </div>
+        <div class="card">
+            <h3>Change</h3>
+            <p class="amount {{#if (gt change 0)}}negative{{else}}positive{{/if}}">
+                {{#if (gt change 0)}}+{{/if}}{{formatCurrency change}}
+            </p>
+            <span class="period">vs last month</span>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h3>Spending by Category (This Month)</h3>
+        <div class="category-breakdown">
+            {{#each spendingByCategory}}
+                <div class="category-item">
+                    <span class="category-name">{{@key}}</span>
+                    <span class="category-amount">{{formatCurrency this}}</span>
+                </div>
+            {{else}}
+                <div class="empty-state">
+                    <p>No expenses this month yet.</p>
+                    <p><a href="/expenses" class="btn btn-primary">Add Your First Expense</a></p>
+                </div>
+            {{/each}}
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h3>Budget Status</h3>
+        <div class="budget-status-list">
+            {{#each budgetStatus}}
+                <div class="budget-item {{#if isOverBudget}}over-budget{{/if}}">
+                    <div class="budget-header">
+                        <span class="budget-category">{{category}}</span>
+                        <span class="budget-amount">{{formatCurrency spent}} / {{formatCurrency budget}}</span>
+                    </div>
+                    <div class="budget-bar">
+                        <div class="budget-bar-fill" data-width="{{#if (gt budget 0)}}{{divide spent budget}}{{else}}{{#if (gt spent 0)}}1{{else}}0{{/if}}{{/if}}"></div>
+                    </div>
+                    <span class="budget-remaining">Remaining: {{formatCurrency remaining}}</span>
+                </div>
+            {{else}}
+                <div class="empty-state">
+                    <p>No budgets set yet.</p>
+                    <p><a href="/budgets" class="btn btn-primary">Set Your Budgets</a></p>
+                </div>
+            {{/each}}
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h3>Monthly Trend (Last 6 Months)</h3>
+        <div class="trend-chart" id="trendChart">
+            {{#if monthlyTrend.length}}
+                {{#each monthlyTrend}}
+                    <div class="trend-bar-container">
+                        <div class="trend-bar" 
+                             data-amount="{{formatCurrency total}}"
+                             data-height="{{#if (gt ../maxTrend 0)}}{{divide total ../maxTrend}}{{else}}0{{/if}}"></div>
+                        <span class="trend-label">{{month}}</span>
+                    </div>
+                {{/each}}
+            {{else}}
+                <div class="empty-state">
+                    <p>No expense data available for trend analysis.</p>
+                </div>
+            {{/if}}
+        </div>
+    </div>
+</div>
+
+<script src="/js/dashboard.js"></script>
+

@@ -1,0 +1,24 @@
+{
+  "name": "expense-buddy",
+  "version": "1.0.0",
+  "description": "Personal expense tracking and budgeting web application",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js",
+    "test": "jest",
+    "seed": "node scripts/seed.js"
+  },
+  "keywords": ["expense", "budget", "tracking"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-handlebars": "^7.1.2",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
+
