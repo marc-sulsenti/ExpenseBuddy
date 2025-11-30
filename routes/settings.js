@@ -28,9 +28,8 @@ router.post('/categories/add', (req, res) => {
   }
 
   try {
-    // If budget is empty or 0, set to null (unlimited), otherwise use the provided value
-  const budgetValue = (!budget || budget === '0' || budget === 0) ? null : parseFloat(budget);
-  categoryStore.add({ name: name.trim(), budget: budgetValue });
+    // Category store handles budget null/0 logic
+    categoryStore.add({ name: name.trim(), budget: budget });
     res.redirect('/settings?success=Category added successfully');
   } catch (error) {
     res.redirect(`/settings?error=${encodeURIComponent(error.message)}`);
@@ -45,9 +44,10 @@ router.post('/categories/:id/update', (req, res) => {
     return res.redirect('/settings?error=Category name is required');
   }
 
+  // Category store handles budget null/0 logic
   categoryStore.update(req.params.id, {
     name: name.trim(),
-    budget: parseFloat(budget) || 0
+    budget: budget
   });
   
   res.redirect('/settings?success=Category updated successfully');
@@ -175,13 +175,10 @@ router.post('/reset', (req, res) => {
     const categoriesFile = path.join(__dirname, '../data/categories.json');
     const recurringFile = path.join(__dirname, '../data/recurring.json');
     
-    // Clear all data files
+    // Wipe everything clean
     fs.writeFileSync(expensesFile, JSON.stringify([], null, 2), 'utf8');
+    fs.writeFileSync(categoriesFile, JSON.stringify([], null, 2), 'utf8');
     fs.writeFileSync(recurringFile, JSON.stringify([], null, 2), 'utf8');
-    
-    // Reinitialize default categories after reset (intentional action)
-    const categoryStore = require('../data/categoryStore');
-    categoryStore.reinitializeDefaults();
     
     res.redirect('/settings?success=All data has been reset. Expense Buddy is now fresh and ready to use.');
   } catch (error) {

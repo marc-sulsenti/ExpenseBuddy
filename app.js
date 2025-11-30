@@ -16,6 +16,11 @@ const hbs = exphbs.create({
     gt: (a, b) => a > b,
     lt: (a, b) => a < b,
     or: (a, b) => a || b,
+    and: (a, b) => a && b,
+    objectLength: (obj) => {
+      if (!obj || typeof obj !== 'object') return 0;
+      return Object.keys(obj).length;
+    },
     subtract: (a, b) => (a - b).toFixed(2),
     multiply: (a, b) => a * b,
     divide: (a, b) => b !== 0 ? a / b : 0,

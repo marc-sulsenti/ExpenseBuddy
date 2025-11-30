@@ -3,26 +3,25 @@ const router = express.Router();
 const expenseStore = require('../data/expenseStore');
 const categoryStore = require('../data/categoryStore');
 
-// Helper function to format date for input fields
+// Convert date to the format HTML date inputs expect
 function formatDateForInput(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toISOString().split('T')[0];
 }
 
-// Helper function to filter expenses
+// Apply filters and sorting to the expense list
 function filterExpenses(expenses, filters) {
   let filtered = [...expenses];
 
-  // Filter by category
+  // Filter by category if one is selected
   if (filters.category && filters.category !== 'all') {
     filtered = filtered.filter(exp => exp.category === filters.category);
   }
 
-  // Filter by date range (validate startDate <= endDate)
+  // If they put the dates in backwards, swap them
   if (filters.startDate && filters.endDate) {
     if (filters.startDate > filters.endDate) {
-      // Swap if startDate > endDate
       [filters.startDate, filters.endDate] = [filters.endDate, filters.startDate];
     }
   }
@@ -34,7 +33,7 @@ function filterExpenses(expenses, filters) {
     filtered = filtered.filter(exp => exp.date <= filters.endDate);
   }
 
-  // Filter by search text
+  // Search in description and category
   if (filters.search) {
     const searchLower = filters.search.toLowerCase();
     filtered = filtered.filter(exp => 
@@ -43,7 +42,7 @@ function filterExpenses(expenses, filters) {
     );
   }
 
-  // Sort
+  // Sort by date or amount
   const sortBy = filters.sortBy || 'date';
   const sortOrder = filters.sortOrder || 'desc';
   
@@ -77,7 +76,7 @@ router.get('/', (req, res) => {
     sortOrder: req.query.sortOrder || 'desc'
   };
 
-  // Set default date range to last 3 months if not specified
+  // Show last 3 months by default if no date range is set
   if (!filters.startDate && !filters.endDate) {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);

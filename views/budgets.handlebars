@@ -20,7 +20,7 @@
                         <td>
                             <input type="number" 
                                    name="budgets[{{id}}]" 
-                                   value="{{#if budget}}{{budget}}{{else}}{{/if}}" 
+                                   value="{{#if (and budget (gt budget 0))}}{{budget}}{{/if}}" 
                                    step="0.01" 
                                    min="0" 
                                    placeholder="Unlimited"

@@ -2,8 +2,52 @@ const express = require('express');
 const router = express.Router();
 const expenseStore = require('../data/expenseStore');
 const categoryStore = require('../data/categoryStore');
+const recurringStore = require('../data/recurringStore');
 
-// Helper function to get expenses for a specific month
+// Automatically create expenses from recurring templates for this month
+function generateRecurringExpenses() {
+  const recurring = recurringStore.getAll().filter(rec => rec.active);
+  if (recurring.length === 0) return;
+  
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  
+  // See what expenses we already have this month
+  const existingExpenses = expenseStore.getAll().filter(exp => {
+    const expDate = new Date(exp.date);
+    return expDate.getFullYear() === currentYear && expDate.getMonth() === currentMonth;
+  });
+  
+  recurring.forEach(rec => {
+    // Don't create duplicates if it already exists
+    const alreadyExists = existingExpenses.some(exp => 
+      exp.amount === rec.amount &&
+      exp.category === rec.category &&
+      exp.description === rec.description
+    );
+
+    if (!alreadyExists) {
+      // Create the expense on the specified day of the month
+      const expenseDate = new Date(currentYear, currentMonth, rec.dayOfMonth);
+      // If the day doesn't exist (like Feb 30), use the last day of the month
+      if (expenseDate.getMonth() !== currentMonth) {
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        expenseDate.setDate(lastDay.getDate());
+      }
+
+      expenseStore.add({
+        date: expenseDate.toISOString().split('T')[0],
+        amount: rec.amount,
+        category: rec.category,
+        paymentMethod: rec.paymentMethod,
+        description: rec.description
+      });
+    }
+  });
+}
+
+// Get all expenses for a specific month
 function getExpensesForMonth(expenses, year, month) {
   return expenses.filter(exp => {
     const expDate = new Date(exp.date);
@@ -20,6 +64,9 @@ function getMonthName(month) {
 
 // GET / - Dashboard
 router.get('/', (req, res) => {
+  // Auto-generate recurring expenses when dashboard loads
+  generateRecurringExpenses();
+  
   const expenses = expenseStore.getAll();
   const categories = categoryStore.getAll();
   
@@ -69,9 +116,9 @@ router.get('/', (req, res) => {
     ? Math.max(...monthlyTrend.map(t => t.total))
     : 0;
 
-  // Budget status
+  // Budget status (filter out inactive categories if any exist)
   const budgetStatus = categories
-    .filter(cat => cat.active)
+    .filter(cat => cat.active !== false)
     .map(cat => {
       const categorySpending = spendingByCategory[cat.name] || 0;
       const budget = cat.budget !== null && cat.budget !== undefined ? cat.budget : null;

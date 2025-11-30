@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node app.js",
-    "test": "jest"
+    "test": "jest",
+    "seed": "node scripts/seed.js"
   },
   "keywords": ["expense", "budget", "tracking"],
   "author": "ExpenseBuddy Team (Marc Sulsenti, Sahil Virani, Justin Synnott, Zachary Rosario)",

@@ -3,7 +3,7 @@ const router = express.Router();
 const expenseStore = require('../data/expenseStore');
 const categoryStore = require('../data/categoryStore');
 
-// Helper function to get expenses for current month
+// Get expenses from the current month
 function getCurrentMonthExpenses(expenses) {
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -20,7 +20,7 @@ router.get('/', (req, res) => {
   const categories = categoryStore.getAll();
   const expenses = getCurrentMonthExpenses(expenseStore.getAll());
 
-  // Calculate spending per category
+  // Add up how much was spent in each category
   const spendingByCategory = {};
   expenses.forEach(exp => {
     if (!spendingByCategory[exp.category]) {
@@ -29,13 +29,13 @@ router.get('/', (req, res) => {
     spendingByCategory[exp.category] += exp.amount;
   });
 
-  // Build budget status for each category
+  // Figure out budget status for each category
   const budgetStatus = categories.map(cat => {
     const spent = spendingByCategory[cat.name] || 0;
     const budget = cat.budget !== null && cat.budget !== undefined ? cat.budget : null;
-    // Calculate remaining only if budget is set (not null/undefined)
+    // Only calculate remaining if they actually set a budget
     const remaining = budget !== null ? budget - spent : null;
-    // Over budget if spent exceeds budget (and budget is set and > 0)
+    // They're over budget if they spent more than the budget (and budget isn't zero)
     const isOverBudget = budget !== null && budget > 0 && spent > budget;
 
     return {
@@ -47,12 +47,12 @@ router.get('/', (req, res) => {
     };
   });
 
-  // Format currency values for display (keep raw numbers for calculations)
+  // Keep numbers as numbers for the form inputs
   const formattedBudgetStatus = budgetStatus.map(item => ({
     ...item,
-    budget: item.budget, // Keep as number for input
-    spent: item.spent, // Keep as number for calculations
-    remaining: item.remaining // Keep as number for calculations
+    budget: item.budget,
+    spent: item.spent,
+    remaining: item.remaining
   }));
 
   res.render('budgets', {
@@ -65,13 +65,19 @@ router.get('/', (req, res) => {
 router.post('/save', (req, res) => {
   const budgets = req.body.budgets || {};
   
-  // Update each category's budget
+  // Save the budget for each category
   Object.keys(budgets).forEach(categoryId => {
     const budgetValue = budgets[categoryId];
-    // If empty string or '0', set to null (unlimited), otherwise parse as float
-    const budgetAmount = (!budgetValue || budgetValue === '' || budgetValue === '0' || parseFloat(budgetValue) === 0) 
-      ? null 
-      : parseFloat(budgetValue);
+    // Empty field = unlimited, 0 = zero budget, anything else = that amount
+    let budgetAmount;
+    if (budgetValue === '' || budgetValue === undefined || budgetValue === null) {
+      budgetAmount = null; // Unlimited
+    } else {
+      const parsed = parseFloat(budgetValue);
+      // If they entered 0, keep it as 0 (explicit zero budget)
+      // If it's not a number, default to unlimited
+      budgetAmount = isNaN(parsed) ? null : parsed;
+    }
     categoryStore.update(categoryId, { budget: budgetAmount });
   });
 
