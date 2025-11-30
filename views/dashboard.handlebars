@@ -23,19 +23,25 @@
 
     <div class="dashboard-section">
         <h3>Spending by Category (This Month)</h3>
-        <div class="category-breakdown">
-            {{#each spendingByCategory}}
-                <div class="category-item">
-                    <span class="category-name">{{@key}}</span>
-                    <span class="category-amount">{{formatCurrency this}}</span>
-                </div>
-            {{else}}
-                <div class="empty-state">
-                    <p>No expenses this month yet.</p>
-                    <p><a href="/expenses" class="btn btn-primary">Add Your First Expense</a></p>
-                </div>
-            {{/each}}
-        </div>
+        {{#if (gt (objectLength spendingByCategory) 0)}}
+            <div class="pie-chart-container">
+                <canvas id="pieChart" width="300" height="300"></canvas>
+                <div class="pie-chart-legend" id="pieChartLegend"></div>
+            </div>
+            <div class="category-breakdown">
+                {{#each spendingByCategory}}
+                    <div class="category-item" data-category="{{@key}}" data-amount="{{this}}">
+                        <span class="category-name">{{@key}}</span>
+                        <span class="category-amount">{{formatCurrency this}}</span>
+                    </div>
+                {{/each}}
+            </div>
+        {{else}}
+            <div class="empty-state">
+                <p>No expenses this month yet.</p>
+                <p><a href="/expenses" class="btn btn-primary">Add Your First Expense</a></p>
+            </div>
+        {{/if}}
     </div>
 
     <div class="dashboard-section">

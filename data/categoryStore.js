@@ -3,51 +3,29 @@ const path = require('path');
 
 const CATEGORIES_FILE = path.join(__dirname, 'categories.json');
 
-// Default categories - exported for use in reset functionality
-const DEFAULT_CATEGORIES = [
-  { id: 'food', name: 'Food', budget: 0, active: true },
-  { id: 'transport', name: 'Transport', budget: 0, active: true },
-  { id: 'rent', name: 'Rent', budget: 0, active: true },
-  { id: 'utilities', name: 'Utilities', budget: 0, active: true },
-  { id: 'entertainment', name: 'Entertainment', budget: 0, active: true },
-  { id: 'other', name: 'Other', budget: 0, active: true }
-];
-
-/**
- * Load categories from JSON file
- * @returns {Array} Array of category objects
- */
+// Read categories from the JSON file
 function loadCategories() {
   try {
     if (!fs.existsSync(CATEGORIES_FILE)) {
-      // Initialize with default categories only if file doesn't exist (first run)
-      saveCategories(DEFAULT_CATEGORIES);
-      return DEFAULT_CATEGORIES;
+      return [];
     }
     const data = fs.readFileSync(CATEGORIES_FILE, 'utf8');
-    if (!data || data.trim() === '') {
-      // File exists but is empty - return empty array (user may have intentionally cleared it)
+    if (!data || data.trim() === '' || data.trim() === '[]') {
       return [];
     }
     const categories = JSON.parse(data);
-    // Return whatever is in the file, even if empty (user may have deleted all categories)
     if (!Array.isArray(categories)) {
-      // Invalid format - return empty array instead of defaults
       return [];
     }
-    // Filter out inactive categories (legacy support for old soft-delete)
+    // Skip any categories marked as inactive (from old soft-delete system)
     return categories.filter(cat => cat.active !== false);
   } catch (error) {
     console.error('Error loading categories:', error);
-    // On error, return empty array instead of defaults
     return [];
   }
 }
 
-/**
- * Save categories to JSON file
- * @param {Array} categories - Array of category objects
- */
+// Write categories to the JSON file
 function saveCategories(categories) {
   try {
     fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(categories, null, 2), 'utf8');
@@ -57,48 +35,33 @@ function saveCategories(categories) {
   }
 }
 
-/**
- * Get all categories
- * @returns {Array} Array of all categories
- */
+// Get all active categories
 function getAll() {
   const categories = loadCategories();
-  // Clean up: remove any inactive categories from the file
+  // Remove any inactive ones and save the cleaned list
   const activeCategories = categories.filter(cat => cat.active !== false);
   if (activeCategories.length !== categories.length) {
-    // Some categories were filtered out, save the cleaned list
     saveCategories(activeCategories);
   }
   return activeCategories;
 }
 
-/**
- * Get active categories only
- * @returns {Array} Array of active categories
- */
+// Get only the active categories
 function getActive() {
   return loadCategories().filter(cat => cat.active);
 }
 
-/**
- * Get category by id
- * @param {string} id - Category id
- * @returns {Object|null} Category or null if not found
- */
+// Find a category by its ID
 function getById(id) {
   const categories = loadCategories();
   return categories.find(cat => cat.id === id) || null;
 }
 
-/**
- * Add a new category
- * @param {Object} category - Category object with name, budget
- * @returns {Object} The created category with id
- */
+// Add a new category
 function add(category) {
   const categories = loadCategories();
   
-  // Check if category name already exists
+  // Make sure the name isn't already taken
   const nameExists = categories.some(cat => 
     cat.name.toLowerCase() === category.name.toLowerCase().trim()
   );
@@ -106,19 +69,25 @@ function add(category) {
     throw new Error('Category with this name already exists');
   }
   
-  // Generate unique ID
+  // Create a URL-friendly ID from the name
   let baseId = category.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   let id = baseId;
   let counter = 1;
+  // If the ID already exists, add a number to make it unique
   while (categories.some(cat => cat.id === id)) {
     id = `${baseId}-${counter}`;
     counter++;
   }
   
+  // Empty budget means unlimited, otherwise use the number they provided
+  const budgetValue = (!category.budget || category.budget === '0' || category.budget === 0) 
+    ? null 
+    : parseFloat(category.budget);
+  
   const newCategory = {
     id: id,
     name: category.name.trim(),
-    budget: parseFloat(category.budget || 0),
+    budget: budgetValue,
     active: true
   };
   categories.push(newCategory);
@@ -126,12 +95,7 @@ function add(category) {
   return newCategory;
 }
 
-/**
- * Update a category by id
- * @param {string} id - Category id
- * @param {Object} updatedFields - Fields to update
- * @returns {Object|null} Updated category or null if not found
- */
+// Update a category
 function update(id, updatedFields) {
   const categories = loadCategories();
   const index = categories.findIndex(cat => cat.id === id);
@@ -139,8 +103,17 @@ function update(id, updatedFields) {
     return null;
   }
   
+  // Handle budget updates - empty means unlimited, 0 means zero budget
   if (updatedFields.budget !== undefined) {
-    updatedFields.budget = parseFloat(updatedFields.budget);
+    if (updatedFields.budget === null || updatedFields.budget === undefined || 
+        updatedFields.budget === '' || updatedFields.budget === 'null') {
+      updatedFields.budget = null;
+    } else if (updatedFields.budget === 0 || updatedFields.budget === '0') {
+      updatedFields.budget = 0; // They explicitly set it to zero
+    } else {
+      const parsed = parseFloat(updatedFields.budget);
+      updatedFields.budget = isNaN(parsed) ? null : parsed;
+    }
   }
   
   categories[index] = { ...categories[index], ...updatedFields };
@@ -148,22 +121,9 @@ function update(id, updatedFields) {
   return categories[index];
 }
 
-/**
- * Reinitialize default categories (used after reset)
- * @returns {Array} Array of default categories
- */
-function reinitializeDefaults() {
-  saveCategories(DEFAULT_CATEGORIES);
-  return DEFAULT_CATEGORIES;
-}
-
-/**
- * Remove a category by id (permanent delete)
- * @param {string} id - Category id
- * @returns {boolean} True if removed, false if not found
- */
+// Delete a category permanently
 function remove(id) {
-  // Load all categories including inactive ones for deletion
+  // Load directly from file to catch inactive ones too
   let categories;
   try {
     if (!fs.existsSync(CATEGORIES_FILE)) {
@@ -184,13 +144,7 @@ function remove(id) {
     return false;
   }
   
-  // Don't allow deletion of default categories
-  const defaultIds = DEFAULT_CATEGORIES.map(cat => cat.id);
-  if (defaultIds.includes(id)) {
-    throw new Error('Cannot delete default categories');
-  }
-  
-  // Permanently remove the category
+  // Remove it from the list and save
   const filtered = categories.filter(cat => cat.id !== id);
   saveCategories(filtered);
   return true;
@@ -202,8 +156,6 @@ module.exports = {
   getById,
   add,
   update,
-  remove,
-  reinitializeDefaults,
-  DEFAULT_CATEGORIES
+  remove
 };
 
