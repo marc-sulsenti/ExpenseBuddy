@@ -27,10 +27,10 @@ function filterExpenses(expenses, filters) {
   }
   
   if (filters.startDate) {
-    filtered = filtered.filter(exp => exp.date >= filters.startDate);
+    filtered = filtered.filter(exp => formatDateForInput(exp.date) >= filters.startDate);
   }
   if (filters.endDate) {
-    filtered = filtered.filter(exp => exp.date <= filters.endDate);
+    filtered = filtered.filter(exp => formatDateForInput(exp.date) <= filters.endDate);
   }
 
   // Search in description and category
@@ -85,6 +85,7 @@ router.get('/', (req, res) => {
 
   const filteredExpenses = filterExpenses(expenses, filters).map(exp => ({
     ...exp,
+    date: formatDateForInput(exp.date),
     amount: exp.amount.toFixed(2) // Format for display
   }));
 
@@ -248,4 +249,3 @@ router.post('/:id/delete', (req, res) => {
 });
 
 module.exports = router;
-
