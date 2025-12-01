@@ -33,7 +33,7 @@ function generateRecurringExpenses() {
       exp.amount === rec.amount &&
       exp.category === rec.category &&
       exp.description === rec.description &&
-      exp.date === dateString
+      exp.date.startsWith(dateString)
     );
     if (!exists) {
       expenseStore.add({
@@ -50,7 +50,7 @@ function generateRecurringExpenses() {
 // Get all expenses for a specific month
 function getExpensesForMonth(expenses, year, month) {
   return expenses.filter(exp => {
-    const expDate = new Date(exp.date + 'T00:00:00');
+    const expDate = new Date(exp.date);
     return expDate.getFullYear() === year && expDate.getMonth() === month;
   });
 }
@@ -141,4 +141,3 @@ router.get('/', (req, res) => {
 });
 
 module.exports = router;
-
