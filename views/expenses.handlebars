@@ -21,9 +21,9 @@
                 <input type="number" id="amount" name="amount" step="0.01" min="0.01" value="{{formData.amount}}" required>
             </div>
             <div class="form-group">
-                <label for="category">Category</label>
-                <select id="category" name="category">
-                    <option value="No Category" {{#if (eq formData.category "No Category")}}selected{{/if}}{{#unless formData.category}}selected{{/unless}}>No Category</option>
+                <label for="category">Category *</label>
+                <select id="category" name="category" required>
+                    <option value="">Select category</option>
                     {{#each categories}}
                         <option value="{{name}}" {{#if (eq ../formData.category name)}}selected{{/if}}>{{name}}</option>
                     {{/each}}
@@ -56,7 +56,6 @@
                 <label for="filterCategory">Category</label>
                 <select id="filterCategory" name="category">
                     <option value="all" {{#if (eq filters.category "all")}}selected{{/if}}>All Categories</option>
-                    <option value="No Category" {{#if (eq filters.category "No Category")}}selected{{/if}}>No Category</option>
                     {{#each categories}}
                         <option value="{{name}}" {{#if (eq ../filters.category name)}}selected{{/if}}>{{name}}</option>
                     {{/each}}
