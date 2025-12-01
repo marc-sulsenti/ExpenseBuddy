@@ -91,6 +91,27 @@ function getPaymentMethod(category) {
   return randomItem(methods);
 }
 
+function isValidMonthDay(year, month, day) {
+  // 1-indexed day (1=first)
+  const date = new Date(year, month, day);
+  return date.getMonth() === month;
+}
+
+function addExpenseOnDate(options) {
+  try {
+    expenseStore.add({
+      date: options.date,
+      amount: options.amount,
+      category: options.category,
+      paymentMethod: options.paymentMethod,
+      description: options.description
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 // Main seed function
 function seed() {
   console.log('Starting to seed data...\n');
@@ -109,7 +130,6 @@ function seed() {
   fs.writeFileSync(recurringFile, JSON.stringify([], null, 2), 'utf8');
   console.log('Existing data cleared.\n');
 
-  // Create categories
   console.log('Creating categories...');
   const createdCategories = [];
   sampleCategories.forEach(cat => {
@@ -123,7 +143,6 @@ function seed() {
   });
   console.log(`Created ${createdCategories.length} categories.\n`);
 
-  // Generate expenses for the last 3 months
   console.log('Generating expenses...');
   const now = new Date();
   const threeMonthsAgo = new Date(now);
@@ -132,46 +151,57 @@ function seed() {
   let expenseCount = 0;
   const categoryNames = createdCategories.map(c => c.name);
 
-  // Generate expenses for each category based on realistic frequency
   categoryNames.forEach(categoryName => {
     const categoryInfo = categoryData[categoryName];
     if (!categoryInfo) return;
-
-    // Generate expenses for this category
     const numExpenses = categoryInfo.frequency;
+    const today = new Date();
+    const dayOfMonth = today.getDate();
+    const months = [];
+    for(let back = 0; back < 3; back++) {
+      const d = new Date(today.getFullYear(), today.getMonth() - back, 1);
+      months.push({ year: d.getFullYear(), month: d.getMonth(), back });
+    }
+
+    months.forEach(({ year, month, back }) => {
+      if(isValidMonthDay(year, month, dayOfMonth)) {
+        const expenseDateString = new Date(year, month, dayOfMonth).toISOString().split('T')[0];
+        const expense = {
+          date: expenseDateString,
+          amount: randomAmount(categoryInfo.amounts.min, categoryInfo.amounts.max),
+          category: categoryName,
+          paymentMethod: getPaymentMethod(categoryName),
+          description: randomItem(categoryInfo.descriptions)
+        };
+        if (addExpenseOnDate(expense)) {
+          expenseCount++;
+        }
+      }
+    });
+
+    const numSpecial = 3; // up to 1 per month
+    const spreadCount = Math.max(numExpenses - numSpecial, 0);
     const dates = [];
-    
-    // Spread dates evenly across the 3 months
-    for (let i = 0; i < numExpenses; i++) {
-      const monthOffset = Math.floor(i / (numExpenses / 3));
-      const monthStart = new Date(threeMonthsAgo);
-      monthStart.setMonth(monthStart.getMonth() + monthOffset);
-      const monthEnd = new Date(monthStart);
-      monthEnd.setMonth(monthEnd.getMonth() + 1);
-      
-      const date = randomDate(monthStart, monthEnd);
+    for (let i = 0; i < spreadCount; i++) {
+      const monthOffset = Math.floor(i / (spreadCount / 3));
+      const monthBase = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
+      const nextMonth = new Date(monthBase); nextMonth.setMonth(nextMonth.getMonth() + 1);
+      const date = randomDate(monthBase, nextMonth);
+      // Don't use 'today'-style dates again (avoid duplicates)
+      if (date.getDate() === dayOfMonth) continue;
       dates.push(date);
     }
-    
-    // Sort dates to make them chronological
     dates.sort((a, b) => a - b);
-
     dates.forEach(date => {
-      const amount = randomAmount(categoryInfo.amounts.min, categoryInfo.amounts.max);
-      const paymentMethod = getPaymentMethod(categoryName);
-      const description = randomItem(categoryInfo.descriptions);
-
-      try {
-        expenseStore.add({
-          date: date.toISOString().split('T')[0],
-          amount: amount,
-          category: categoryName,
-          paymentMethod: paymentMethod,
-          description: description
-        });
+      const expense = {
+        date: date.toISOString().split('T')[0],
+        amount: randomAmount(categoryInfo.amounts.min, categoryInfo.amounts.max),
+        category: categoryName,
+        paymentMethod: getPaymentMethod(categoryName),
+        description: randomItem(categoryInfo.descriptions)
+      };
+      if (addExpenseOnDate(expense)) {
         expenseCount++;
-      } catch (error) {
-        console.log(`  ✗ Failed to create expense: ${error.message}`);
       }
     });
   });
@@ -222,4 +252,3 @@ if (require.main === module) {
 }
 
 module.exports = { seed };
-
