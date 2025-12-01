@@ -53,7 +53,7 @@ function add(expense) {
   const expenses = loadExpenses();
   const newExpense = {
     id: Date.now().toString(),
-    date: expense.date,
+    date: new Date(expense.date + 'T12:00:00').toISOString(),
     amount: parseFloat(expense.amount),
     category: expense.category,
     paymentMethod: expense.paymentMethod,
@@ -120,4 +120,3 @@ module.exports = {
   remove,
   getById
 };
-
