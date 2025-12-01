@@ -95,70 +95,116 @@ router.get('/export/csv', (req, res) => {
   }
 });
 
+// Helper function to parse CSV line, handling quoted fields with commas
+function parseCSVLine(line) {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote (double quote)
+        current += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Field separator (comma outside quotes)
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  // Add the last field
+  values.push(current.trim());
+  
+  return values;
+}
+
 // POST /api/import/csv - Import expenses from CSV
 router.post('/import/csv', (req, res) => {
-  // Note: For file upload, we'd typically use multer, but for simplicity,
-  // we'll expect the CSV content in the request body or use a simple approach
-  // For now, we'll provide a basic implementation that expects CSV text
   try {
     if (!req.body.csvContent) {
       return res.redirect('/settings?error=CSV content is required');
     }
     
-    const lines = req.body.csvContent.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
+    const lines = req.body.csvContent.split(/\r?\n/).filter(line => line.trim());
+    if (lines.length === 0) {
+      return res.redirect('/settings?error=CSV content is empty');
+    }
     
     let imported = 0;
     let errors = [];
     
-    // Skip header row
-    for (let i = 1; i < lines.length; i++) {
+    // Skip header row if present
+    const startIndex = lines[0].toLowerCase().includes('date') && lines[0].toLowerCase().includes('amount') ? 1 : 0;
+    
+    for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
       
       try {
-        // Simple CSV parsing (doesn't handle quoted fields with commas perfectly, but works for basic cases)
-        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        // Parse CSV line handling quoted fields
+        const values = parseCSVLine(line);
         
-        if (values.length >= 4) {
-          const date = values[0];
-          const amount = parseFloat(values[1]);
-          const category = values[2] || 'No Category';
-          const paymentMethod = values[3];
-          const description = values[4] || '';
-          
-          // Validate required fields
-          if (!date || isNaN(new Date(date).getTime())) {
-            errors.push(`Row ${i + 1}: Invalid date`);
-            continue;
-          }
-          if (isNaN(amount) || amount <= 0) {
-            errors.push(`Row ${i + 1}: Invalid amount`);
-            continue;
-          }
-          if (!paymentMethod) {
-            errors.push(`Row ${i + 1}: Payment method is required`);
-            continue;
-          }
-          
-          // Validate category if it's not "No Category"
-          if (category !== 'No Category') {
-            const allCategories = categoryStore.getAll();
-            if (!allCategories.some(cat => cat.name === category)) {
-              errors.push(`Row ${i + 1}: Category "${category}" does not exist`);
-              continue;
-            }
-          }
-          
-          expenseStore.add({
-            date,
-            amount,
-            category,
-            paymentMethod,
-            description
-          });
-          imported++;
+        if (values.length < 4) {
+          errors.push(`Row ${i + 1}: Insufficient columns (expected at least 4: Date, Amount, Category, Payment Method)`);
+          continue;
         }
+        
+        const date = values[0].replace(/^"|"$/g, '').trim();
+        const amount = parseFloat(values[1].replace(/^"|"$/g, '').trim());
+        const category = values[2].replace(/^"|"$/g, '').trim();
+        const paymentMethod = values[3].replace(/^"|"$/g, '').trim();
+        const description = (values[4] || '').replace(/^"|"$/g, '').trim();
+        
+        // Validate required fields
+        if (!date || isNaN(new Date(date).getTime())) {
+          errors.push(`Row ${i + 1}: Invalid date "${date}"`);
+          continue;
+        }
+        
+        if (isNaN(amount) || amount <= 0) {
+          errors.push(`Row ${i + 1}: Invalid amount "${values[1]}"`);
+          continue;
+        }
+        
+        if (!category || category === '') {
+          errors.push(`Row ${i + 1}: Category is required`);
+          continue;
+        }
+        
+        if (!paymentMethod || paymentMethod === '') {
+          errors.push(`Row ${i + 1}: Payment method is required`);
+          continue;
+        }
+        
+        // Map "Other" to "Misc" for backward compatibility
+        const finalCategory = category === 'Other' ? 'Misc' : category;
+        
+        // Validate category exists
+        const allCategories = categoryStore.getAll();
+        if (!allCategories.some(cat => cat.name === finalCategory)) {
+          errors.push(`Row ${i + 1}: Category "${finalCategory}" does not exist. Available categories: ${allCategories.map(c => c.name).join(', ')}`);
+          continue;
+        }
+        
+        expenseStore.add({
+          date,
+          amount,
+          category: finalCategory,
+          paymentMethod,
+          description
+        });
+        imported++;
       } catch (err) {
         errors.push(`Row ${i + 1}: ${err.message}`);
       }
